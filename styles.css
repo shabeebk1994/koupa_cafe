@@ -151,6 +151,17 @@ p { margin: 0 0 1em; }
   width: auto;
 }
 
+/* the big "Koupa" wordmark already names the page on first view, so the
+   header logo waits until that wordmark has scrolled up under the header */
+.js .brand {
+  transition: opacity .35s, transform .35s, visibility .35s;
+}
+.js .site-header:not(.past-hero) .brand {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+}
+
 .site-nav {
   display: flex;
   align-items: center;
@@ -692,9 +703,23 @@ html:not(.js) .menu-panel + .menu-panel { margin-top: 72px; }
   }
   .site-nav .btn { margin-top: 18px; }
 
-  .hero-grid { grid-template-columns: 1fr; }
-  .hero-cup { order: -1; width: 120px; margin: 0; }
+  .header-inner { min-height: 64px; }
+  .brand img { height: 40px; }
+
+  .hero { padding-top: 12px; }
+  .hero-grid { grid-template-columns: 1fr; gap: 16px; }
+  .hero-cup { order: -1; width: 104px; margin: 0 0 0 -6px; }
   .hero-actions .btn { flex: 1 1 auto; }
+  .wordmark { margin-top: 36px; }
+
+  /* the tab strip already draws its own rules, so drop the heading's */
+  .menu .section-head { border-bottom: 0; padding-bottom: 0; margin-bottom: 28px; }
+
+  .story-grid { row-gap: 20px; }
+  .story-body { padding-top: 0; }
+
+  .wa-float { width: 54px; height: 54px; }
+  .wa-float .wa-glyph { width: 28px; height: 28px; }
   .visit-actions .btn { flex: 1 1 100%; }
 
   .details div { grid-template-columns: 1fr; gap: 4px; }
@@ -705,6 +730,10 @@ html:not(.js) .menu-panel + .menu-panel { margin-top: 72px; }
   .insta-follow { width: 100%; }
 
   .menu-tabs { width: auto; margin-inline: calc(var(--gutter) * -1); border-radius: 0; border-inline: 0; padding-inline: var(--gutter); }
+  /* fade the edge that has more tabs past it, so it reads as scrollable */
+  .menu-tabs.more-end { -webkit-mask-image: linear-gradient(to right, #000 78%, transparent); mask-image: linear-gradient(to right, #000 78%, transparent); }
+  .menu-tabs.more-start { -webkit-mask-image: linear-gradient(to left, #000 78%, transparent); mask-image: linear-gradient(to left, #000 78%, transparent); }
+  .menu-tabs.more-start.more-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent); }
   .menu-tab { padding: 10px 18px; }
   .menu-feature { grid-template-columns: 84px 1fr; gap: 18px; padding: 20px; border-radius: 16px; }
   .menu-art { width: 84px; }

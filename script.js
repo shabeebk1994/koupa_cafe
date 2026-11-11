@@ -30,6 +30,17 @@ const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > 8
 window.addEventListener('scroll', onScroll, { passive: true });
 onScroll();
 
+// Header logo appears only once the hero wordmark has scrolled under the header,
+// so the name isn't shown twice on the first screen
+const wordmark = document.querySelector('.wordmark');
+if (wordmark && 'IntersectionObserver' in window) {
+  new IntersectionObserver(([entry]) => {
+    header.classList.toggle('past-hero', !entry.isIntersecting);
+  }, { rootMargin: `-${header.offsetHeight}px 0px 0px 0px` }).observe(wordmark);
+} else {
+  header.classList.add('past-hero');
+}
+
 // Menu tabs
 const tabList = document.querySelector('.menu-tabs');
 if (tabList) {
@@ -87,9 +98,18 @@ if (tabList) {
     moveIndicator(current());
     requestAnimationFrame(() => requestAnimationFrame(() => tabList.classList.remove('no-anim')));
   };
+  // mark which edges have hidden tabs past them (styled as a fade on phones)
+  const markOverflow = () => {
+    const max = tabList.scrollWidth - tabList.clientWidth;
+    tabList.classList.toggle('more-start', tabList.scrollLeft > 4);
+    tabList.classList.toggle('more-end', tabList.scrollLeft < max - 4);
+  };
+  tabList.addEventListener('scroll', markOverflow, { passive: true });
+
   placeQuietly();
-  document.fonts?.ready.then(placeQuietly);
-  window.addEventListener('resize', placeQuietly);
+  markOverflow();
+  document.fonts?.ready.then(() => { placeQuietly(); markOverflow(); });
+  window.addEventListener('resize', () => { placeQuietly(); markOverflow(); });
 }
 
 // Instagram feed
