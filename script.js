@@ -30,86 +30,40 @@ const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > 8
 window.addEventListener('scroll', onScroll, { passive: true });
 onScroll();
 
-// Header logo appears only once the hero wordmark has scrolled under the header,
-// so the name isn't shown twice on the first screen
-const wordmark = document.querySelector('.wordmark');
-if (wordmark && 'IntersectionObserver' in window) {
-  new IntersectionObserver(([entry]) => {
-    header.classList.toggle('past-hero', !entry.isIntersecting);
-  }, { rootMargin: `-${header.offsetHeight}px 0px 0px 0px` }).observe(wordmark);
-} else {
-  header.classList.add('past-hero');
-}
-
-// Menu tabs
-const tabList = document.querySelector('.menu-tabs');
-if (tabList) {
-  const tabs = [...tabList.querySelectorAll('.menu-tab')];
-  const indicator = tabList.querySelector('.menu-tab-indicator');
-
-  // let the drawings "sketch" themselves: normalise every stroke to length 1
-  document.querySelectorAll('.menu-art path, .menu-art rect')
-    .forEach((el) => el.setAttribute('pathLength', '1'));
-
-  // stagger index for each menu row
-  document.querySelectorAll('.menu-list').forEach((list) => {
+// Menu animations: cards and headings rise in as they scroll into view,
+// and each card's rows follow one after another
+const revealEls = document.querySelectorAll('.menu-card, .menu-new, .menu-group, .menu-cats');
+if (revealEls.length && 'IntersectionObserver' in window) {
+  document.querySelectorAll('.menu-list, .menu-cats').forEach((list) => {
     [...list.children].forEach((li, i) => li.style.setProperty('--i', i));
   });
-
-  const moveIndicator = (tab) => {
-    indicator.style.width = `${tab.offsetWidth}px`;
-    indicator.style.transform = `translateX(${tab.offsetLeft}px)`;
-  };
-
-  const select = (tab, { focus = false } = {}) => {
-    tabs.forEach((t) => {
-      const on = t === tab;
-      t.setAttribute('aria-selected', String(on));
-      t.tabIndex = on ? 0 : -1;
-      document.getElementById(t.getAttribute('aria-controls')).classList.toggle('is-active', on);
+  const revealIO = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('is-in');
+      revealIO.unobserve(e.target);
     });
-    moveIndicator(tab);
-    if (focus) tab.focus();
-    // keep the chosen tab visible when the tab strip scrolls sideways on phones
-    tabList.scrollTo({ left: tab.offsetLeft - (tabList.clientWidth - tab.offsetWidth) / 2, behavior: 'smooth' });
+  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+  revealEls.forEach((el) => { el.classList.add('reveal'); revealIO.observe(el); });
+}
+
+// Menu page: highlight the category chip for the section on screen,
+// and keep that chip scrolled into view in the chip strip
+const jump = document.querySelector('.menu-jump-inner');
+if (jump && 'IntersectionObserver' in window) {
+  const links = new Map([...jump.querySelectorAll('a')].map((a) => [a.hash.slice(1), a]));
+  const visible = new Set();
+  const update = () => {
+    const first = [...links.keys()].find((id) => visible.has(id));
+    links.forEach((a, id) => a.classList.toggle('is-current', id === first));
+    const cur = links.get(first);
+    if (cur) jump.scrollTo({ left: cur.offsetLeft - (jump.clientWidth - cur.offsetWidth) / 2, behavior: 'smooth' });
   };
-
-  tabs.forEach((tab) => tab.addEventListener('click', () => select(tab)));
-
-  tabList.addEventListener('keydown', (e) => {
-    const i = tabs.indexOf(document.activeElement);
-    if (i < 0) return;
-    const next = {
-      ArrowRight: tabs[(i + 1) % tabs.length],
-      ArrowLeft: tabs[(i - 1 + tabs.length) % tabs.length],
-      Home: tabs[0],
-      End: tabs[tabs.length - 1],
-    }[e.key];
-    if (next) {
-      e.preventDefault();
-      select(next, { focus: true });
-    }
-  });
-
-  // place the pill without animating on first paint, and again once fonts change widths
-  const current = () => tabs.find((t) => t.getAttribute('aria-selected') === 'true');
-  const placeQuietly = () => {
-    tabList.classList.add('no-anim');
-    moveIndicator(current());
-    requestAnimationFrame(() => requestAnimationFrame(() => tabList.classList.remove('no-anim')));
-  };
-  // mark which edges have hidden tabs past them (styled as a fade on phones)
-  const markOverflow = () => {
-    const max = tabList.scrollWidth - tabList.clientWidth;
-    tabList.classList.toggle('more-start', tabList.scrollLeft > 4);
-    tabList.classList.toggle('more-end', tabList.scrollLeft < max - 4);
-  };
-  tabList.addEventListener('scroll', markOverflow, { passive: true });
-
-  placeQuietly();
-  markOverflow();
-  document.fonts?.ready.then(() => { placeQuietly(); markOverflow(); });
-  window.addEventListener('resize', () => { placeQuietly(); markOverflow(); });
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+    update();
+  }, { rootMargin: '-140px 0px -45% 0px' });
+  links.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
 }
 
 // Instagram feed
